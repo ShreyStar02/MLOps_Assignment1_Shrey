@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+.venv-clean/
+venv/
+.pytest_cache/
+.coverage
+coverage.xml
+mlruns/
+mlflow.db
+data/raw/
+*.egg-info/
+.ipynb_checkpoints/
+logs/
+.DS_Store
