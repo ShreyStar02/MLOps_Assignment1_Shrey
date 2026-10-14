@@ -1,6 +1,11 @@
-# MLOps Assignment 1 - Report
+---
+title: MLOps Assignment 1 Report
+description: Rubric report for the heart disease classification MLOps assignment.
+---
 
-Student: `<NAME / BITS ID>`  |  Repo: `<GITHUB URL>`  |  Video: `<LINK>`
+## MLOps Assignment 1 - Report
+
+Student: `<NAME / BITS ID>`  |  Repo: [MLOps_Assignment1_Shrey](https://github.com/ShreyStar02/MLOps_Assignment1_Shrey)  |  Video: `<LINK>`
 
 ## 1. Problem and dataset
 

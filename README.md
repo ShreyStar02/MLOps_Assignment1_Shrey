@@ -1,8 +1,13 @@
-# Heart Disease Risk - End-to-End MLOps Project
+---
+title: Heart Disease Risk API
+description: End-to-end MLOps project for heart disease classification and FastAPI inference.
+---
+
+## Heart Disease Risk - End-to-End MLOps Project
 
 Predicts heart disease risk from the UCI Heart Disease (Cleveland) dataset and serves it as a containerised, monitored FastAPI service.
 
-Repository: `<PASTE GITHUB URL HERE>`  |  Full report: [docs/REPORT.md](docs/REPORT.md)
+Repository: [GitHub repository](https://github.com/ShreyStar02/MLOps_Assignment1_Shrey)  |  Full report: [docs/REPORT.md](docs/REPORT.md)
 
 ## Quick start (clean machine)
 
