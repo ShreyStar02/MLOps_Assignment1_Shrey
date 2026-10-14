@@ -62,7 +62,7 @@ GitHub Actions `.github/workflows/ci.yml`: checkout -> flake8 -> pytest with cov
 
 ## 8. Containerisation
 
-`Dockerfile` (python:3.11-slim, non-root `appuser`, HEALTHCHECK). Docker execution was not verified on this machine because the Docker CLI/daemon is unavailable; the image build, runtime, request logs, and non-root identity still need screenshot evidence.
+`Dockerfile` (python:3.11-slim, non-root `appuser`, HEALTHCHECK). GitHub Actions built the image and passed the `/health` and `/predict` smoke tests. The workflow also checks that the container UID is nonzero. Docker Desktop is unavailable on this machine, and no runtime screenshot is present.
 
 ## 9. Deployment
 
