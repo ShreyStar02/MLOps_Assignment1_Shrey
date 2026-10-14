@@ -7,6 +7,7 @@ COPY requirements-serve.txt .
 RUN pip install --no-cache-dir -r requirements-serve.txt
 
 COPY api ./api
+COPY src ./src
 COPY models ./models
 
 RUN useradd -m appuser
