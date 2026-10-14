@@ -1,6 +1,6 @@
 # MLOps Assignment 1 - Report
 
-Student: `ShreyStar02 / <BITS ID>`  |  Repo: `<GITHUB URL>`  |  Video: `<LINK>`
+Student: `<NAME / BITS ID>`  |  Repo: `<GITHUB URL>`  |  Video: `<LINK>`
 
 ## 1. Problem and dataset
 
