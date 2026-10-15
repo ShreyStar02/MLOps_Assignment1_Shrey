@@ -66,7 +66,7 @@ GitHub Actions `.github/workflows/ci.yml`: checkout -> flake8 -> pytest with cov
 
 ## 9. Deployment
 
-`k8s/deployment.yaml` (2 replicas, readiness/liveness probes, resource limits, LoadBalancer Service) and optional `k8s/ingress.yaml`. Kubernetes execution was not verified because `kubectl` is unavailable; pod readiness and LoadBalancer requests still need to be demonstrated on Docker Desktop.
+`k8s/deployment.yaml` (2 replicas, readiness/liveness probes, resource limits, LoadBalancer Service) and optional `k8s/ingress.yaml`. The `kubectl` client is installed, but this machine has no `docker-desktop` cluster context because Docker Desktop/WSL is not installed. Pod readiness and LoadBalancer requests remain unverified.
 
 ## 10. Monitoring and logging
 
