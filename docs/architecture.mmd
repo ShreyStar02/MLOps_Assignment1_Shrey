@@ -1,0 +1,11 @@
+flowchart LR
+  A[UCI dataset] --> B[download_data.py / clean]
+  B --> C[EDA]
+  B --> D[train.py: GridSearchCV + CV]
+  D --> E[(MLflow tracking)]
+  D --> F[models/model.joblib]
+  F --> G[Docker image: FastAPI]
+  H[GitHub Actions: lint, test, train, build] --> G
+  G --> I[Kubernetes Deployment + LoadBalancer]
+    I --> J["/predict"]
+    I --> K["/metrics"] --> L[Prometheus] --> M[Grafana]

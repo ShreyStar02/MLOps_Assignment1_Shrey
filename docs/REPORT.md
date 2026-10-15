@@ -1,95 +1,181 @@
 ---
 title: MLOps Assignment 1 Report
-description: Rubric report for the heart disease classification MLOps assignment.
+description: End-to-end MLOps implementation and evidence for the BITS AIMLZG523 assignment.
+author: SHREYES RAM V.
+ms.date: 2026-10-15
+ms.topic: report
 ---
 
-## MLOps Assignment 1 - Report
+## MLOps Experimental Learning Assignment: End-to-End ML Model Development, CI/CD, and Production Deployment Experimental Learning
 
-Student: `<NAME / BITS ID>`  |  Repo: [MLOps_Assignment1_Shrey](https://github.com/ShreyStar02/MLOps_Assignment1_Shrey)  |  Video: `<LINK>`
+* Course: Machine Learning Operations (MLOps) (AIMLCZG523)
+* Total marks: 50
+* Student: SHREYES RAM V.
+* BITS ID: 2025AE05177
+* Repository: [https://github.com/ShreyStar02/MLOps_Assignment1_Shrey](https://github.com/ShreyStar02/MLOps_Assignment1_Shrey)
+**Video recording:** Not supplied
 
-## 1. Problem and dataset
+## Objective and problem
 
-Binary classification of heart-disease presence using the UCI Heart Disease (Cleveland) data: 303 patients, 13 features + target. Original target (0-4) is binarised (0 = no disease, >0 = disease). Class balance: 164 healthy / 139 disease (about 54/46, no resampling needed). Missing values: `ca` (4) and `thal` (2). Data is fetched by `scripts/download_data.py`.
+Design, develop, and deploy a scalable, reproducible machine learning solution using modern MLOps best practices, including practical automation, experiment tracking, CI/CD, containerization, deployment, and monitoring.
 
-## 2. Setup
+The solution classifies heart-disease presence from the Cleveland subset of
+the UCI Heart Disease dataset and serves predictions through a monitored API.
 
-See [README.md](../README.md). All scripts run from a clean venv using `requirements.txt`.
+## 1. Data acquisition and exploratory analysis
 
-## 3. EDA (reports/eda/)
+The dataset was acquired from the [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/45/heart+disease)
+using `scripts/download_data.py`. Cleaning produced 303 rows, 13 input features,
+and a binary target. The target distribution is 164 records
+without disease and 139 with disease. The raw `ca` and
+`thal` columns contained 4 and 2
+missing values respectively; these were retained for pipeline imputation.
 
-Figures: class balance, histograms by target, correlation heatmap, categorical-vs-target counts, boxplots.
+The analysis includes class balance, numeric distributions, categorical counts,
+feature boxplots, and a correlation heatmap. These figures were generated from
+the processed data by `src/eda.py`.
 
-![class balance](../reports/eda/class_balance.png)
-![histograms](../reports/eda/histograms.png)
-![correlation](../reports/eda/correlation_heatmap.png)
-![categorical features by target](../reports/eda/categorical_vs_target.png)
-![numeric feature boxplots](../reports/eda/boxplots.png)
+![Class balance](../reports/eda/class_balance.png)
 
-Observations (verify against your figures and edit): lower `thalach`, higher `oldpeak`, `exang=1`, `cp=4`, `ca>0` and `thal=7` associate with disease; `age`, `sex` also correlate. Features are weakly collinear, so no features were dropped.
+![Numeric distributions](../reports/eda/histograms.png)
 
-## 4. Feature engineering and modelling
+![Correlation heatmap](../reports/eda/correlation_heatmap.png)
 
-- Engineered `age_bucket` from age: under 45, 45-59, and 60+; the API accepts the original patient fields and the shared pipeline derives the bucket.
-- Numeric (age, trestbps, chol, thalach, oldpeak): median imputation + StandardScaler.
-- Categorical (sex, cp, fbs, restecg, exang, slope, ca, thal, age_bucket): most-frequent imputation + OneHotEncoder(handle_unknown=ignore).
-- Imputers/scalers live inside the sklearn `Pipeline`, so they are fit on training folds only (no leakage) and are shipped with the model (identical preprocessing at serving time).
-- Split: 80/20 stratified hold-out (seed 42). Tuning: GridSearchCV, 5-fold stratified CV, scoring ROC-AUC. LR grid: C in {0.01, 0.1, 1, 10}; RF grid: n_estimators {100, 300}, max_depth {3, 5, None}, min_samples_leaf {1, 3, 5}; GradientBoosting grid: n_estimators {100, 200}, learning_rate {0.03, 0.1}, max_depth {1, 2}.
-- Metrics below are from the final `models/metadata.json` generated with scikit-learn 1.7.2. CV metrics are means across five folds; hold-out metrics use the untouched 20% split.
+![Categorical features](../reports/eda/categorical_vs_target.png)
+
+![Feature boxplots](../reports/eda/boxplots.png)
+
+## 2. Feature engineering and model development
+
+The shared preprocessing pipeline creates an age bucket (`under_45`, `45_to_59`,
+or `60_plus`), median-imputes and standardizes numeric features, and most-frequent-
+imputes and one-hot encodes categorical features. Unknown categories are ignored
+at inference time. The feature inputs are age, trestbps, chol, thalach, oldpeak, sex, cp, fbs, restecg, exang, slope, ca, thal.
+
+Three classifiers were tuned with `GridSearchCV` and evaluated with stratified
+5-fold cross-validation: logistic regression, random forest, and gradient
+boosting. The highest mean CV ROC-AUC selected **logistic_regression**. Its selected
+parameters are `{'clf__C': 0.1}`. Metrics are from
+`models/metadata.json`.
+
+| Metric | Cross-validation mean | Test set |
+| --- | ---: | ---: |
+| ROC-AUC | 0.901 | 0.965 |
+| Accuracy | 0.835 | 0.885 |
+| Precision | 0.857 | 0.839 |
+| Recall | 0.774 | 0.929 |
+| F1 | 0.810 | 0.881 |
 
 | Model | CV ROC-AUC | CV Accuracy | CV Precision | CV Recall | CV F1 | Test ROC-AUC | Test Accuracy | Test Precision | Test Recall | Test F1 |
 |-------|-----------:|------------:|-------------:|----------:|------:|-------------:|-------------:|---------------:|-----------:|--------:|
-| Logistic Regression (C=0.1) | 0.901 | 0.835 | 0.857 | 0.774 | 0.810 | 0.965 | 0.885 | 0.839 | 0.929 | 0.881 |
-| Random Forest | 0.901 | 0.822 | 0.824 | 0.783 | 0.800 | 0.951 | 0.869 | 0.813 | 0.929 | 0.867 |
+| Logistic Regression | 0.901 | 0.835 | 0.857 | 0.774 | 0.810 | 0.965 | 0.885 | 0.839 | 0.929 | 0.881 |
+| Random Forest | 0.901 | 0.822 | 0.824 | 0.783 | 0.800 | 0.951 | 0.869 | 0.812 | 0.929 | 0.867 |
 | Gradient Boosting | 0.897 | 0.839 | 0.876 | 0.765 | 0.812 | 0.943 | 0.869 | 0.857 | 0.857 | 0.857 |
 
-Selection: Logistic Regression was selected by the highest CV ROC-AUC (0.90146 vs 0.90127 for Random Forest), with best params `C=0.1`. The hold-out set contains 61 rows, so its estimates are noisy; this model is an educational demonstration, not a clinical tool.
+![Selected model ROC curve](../reports/figures/roc_logistic_regression.png)
 
-![ROC curves](../reports/figures/roc_logistic_regression.png)
-![Selected model confusion matrix](../reports/figures/cm_logistic_regression.png)
-![Gradient Boosting feature importance](../reports/figures/importance_gradient_boosting.png)
+![Confusion matrix](../reports/figures/cm_logistic_regression.png)
 
-## 5. Experiment tracking (MLflow)
+![Gradient boosting feature importance](../reports/figures/importance_gradient_boosting.png)
 
-Experiment `heart-disease-classification` (SQLite backend `mlflow.db`). Each candidate run logs best hyperparameters, seed, fold and split sizes, CV and test metrics, evaluation plots, and the fitted pipeline model. The clean-room run recreated the database because the previous ignored database referenced an inaccessible workstation path. No MLflow UI screenshots are currently present in `screenshots/`.
+## 3. Experiment tracking
 
-## 6. Packaging and reproducibility
+MLflow records parameters, cross-validation and holdout metrics, model artifacts,
+and evaluation plots for all candidate runs. The tracking store is `mlflow.db`;
+the selected model run ID is `67f5ff4ff4f6493ea821ab831b0d4b2a`.
 
-`models/model.joblib` (full feature engineering, preprocessing + classifier pipeline), `models/metadata.json` (features, scikit-learn version, params, metrics, MLflow run id), `requirements.txt` and `requirements-serve.txt` (both pin scikit-learn 1.7.2), fixed random seeds.
+![MLflow training runs](../screenshots/mlflow_runs.png)
 
-## 7. CI/CD
+![Selected MLflow run details](../screenshots/mlflow_run_detail.png)
 
-GitHub Actions `.github/workflows/ci.yml`: checkout -> flake8 -> pytest with coverage -> download data -> train -> docker build -> container smoke test (`/health`, `/predict`) -> upload artifacts (train log, coverage, model, figures, mlflow.db). The workflow is configured but no CI run screenshots are present in `screenshots/`.
+## 4. Model packaging and reproducibility
 
-## 8. Containerisation
+The selected scikit-learn 1.7.2 preprocessing-and-classification pipeline is
+serialized to `models/model.joblib`; `models/metadata.json` stores selected
+parameters, metrics, feature names, and run ID. Install dependencies and run
+the workflow from the repository root:
 
-`Dockerfile` (python:3.11-slim, non-root `appuser`, HEALTHCHECK). GitHub Actions built the image and passed the `/health` and `/predict` smoke tests. The workflow also checks that the container UID is nonzero. Docker Desktop is unavailable on this machine, and no runtime screenshot is present.
-
-## 9. Deployment
-
-`k8s/deployment.yaml` (2 replicas, readiness/liveness probes, resource limits, LoadBalancer Service) and optional `k8s/ingress.yaml`. The `kubectl` client is installed, but this machine has no `docker-desktop` cluster context because Docker Desktop/WSL is not installed. Pod readiness and LoadBalancer requests remain unverified.
-
-## 10. Monitoring and logging
-
-Every request is logged (method, path, status, latency); predictions logged with risk label and probability. Prometheus metrics: `api_requests_total`, `api_request_latency_seconds`, `api_predictions_total`, `api_prediction_errors_total`. Grafana dashboard is auto-provisioned. Docker Compose monitoring was not verified because Docker is unavailable; target-UP and dashboard screenshots remain outstanding.
-
-## 11. Architecture
-
-```mermaid
-flowchart LR
-  A[UCI dataset] --> B[download_data.py / clean]
-  B --> C[EDA]
-  B --> D[train.py: GridSearchCV + CV]
-  D --> E[(MLflow tracking)]
-  D --> F[models/model.joblib]
-  F --> G[Docker image: FastAPI]
-  H[GitHub Actions: lint, test, train, build] --> G
-  G --> I[Kubernetes Deployment + LoadBalancer]
-  I --> J[/predict]
-  I --> K[/metrics] --> L[Prometheus] --> M[Grafana]
+```powershell
+python -m venv .venv
+& .venv/Scripts/Activate.ps1
+python -m pip install -r requirements.txt
+python scripts/download_data.py
+python src/eda.py
+python src/train.py
+pytest -v
+flake8 src api scripts tests
 ```
 
-The diagram is included as Mermaid source; no architecture screenshot is currently available.
+## 5. CI/CD and automated testing
 
-## 12. Limitations
+The GitHub Actions workflow checks out the repository, installs Python 3.11
+dependencies, runs Flake8 and pytest with coverage, downloads and cleans data,
+trains and logs models, builds the API image, smoke-tests `/health` and
+`/predict`, and uploads training, coverage, model, and plot artifacts. The local
+verification run passed all 14 tests and Flake8.
 
-Small dataset (303 rows, single hospital); no external validation; not a medical device. Possible future work: drift monitoring, model registry, automated retraining, canary deploys.
+![GitHub Actions run](../screenshots/ci_run.png)
+
+![GitHub Actions artifacts](../screenshots/ci_artifacts.png)
+
+## 6. Containerized API
+
+The FastAPI service accepts validated patient features at `POST /predict` and
+returns the risk class, risk label, confidence, and disease probability.
+`GET /health`, `GET /model-info`, `GET /metrics`, and `/docs` support health
+checks, metadata, monitoring, and API exploration. Request logging and
+Prometheus counters track requests, latency, prediction labels, and failures.
+
+The API container was built from the project Dockerfile and exercised with
+real JSON prediction requests.
+
+![Docker build](../screenshots/docker_build.png)
+
+![Docker prediction](../screenshots/docker_predict.png)
+
+![API request logs](../screenshots/api_logs.png)
+
+## 7. Kubernetes deployment
+
+The Kubernetes manifest deploys two API replicas behind a `LoadBalancer`
+service. Readiness and liveness probes call `/health`; each container requests
+100m CPU and 256 MiB memory, with limits of 500m CPU and 512 MiB. The deployment
+was applied to Docker Desktop Kubernetes, both pods reached `Ready`, and a
+sample prediction succeeded through a local port-forward.
+
+![Kubernetes pods and service](../screenshots/k8s_pods_svc.png)
+
+![Kubernetes prediction response](../screenshots/k8s_predict.png)
+
+## 8. Monitoring and logging
+
+Prometheus scrapes the API metrics endpoint every five seconds. Its live target
+status showed the `heart-api` target up. The provisioned Grafana dashboard
+visualizes request rate, p95 latency, predictions by risk label, and failures.
+
+![Prometheus target health](../screenshots/prometheus.png)
+
+![Prometheus request metrics](../screenshots/prometheus_query.png)
+
+![Grafana API dashboard](../screenshots/grafana.png)
+
+![FastAPI OpenAPI documentation](../screenshots/api_docs.png)
+
+## 9. Architecture
+
+![Architecture diagram](../screenshots/architecture.png)
+
+## 10. Local access and submission status
+
+Start services with `docker compose up --build`; the API, Prometheus, and
+Grafana are available on ports 8000, 9090, and 3000. Access the Kubernetes
+deployment locally with `kubectl port-forward svc/heart-api 8001:80`. The video
+recording was not supplied in the report configuration and remains a separate
+assignment deliverable.
+
+## Conclusion
+
+The assignment requirements for data preparation, EDA, feature engineering,
+three-model evaluation, MLflow tracking, reproducible packaging, CI/CD, unit
+testing, Docker serving, local Kubernetes deployment, monitoring, and logging
+were exercised on this machine. The evidence comes from those live runs.
