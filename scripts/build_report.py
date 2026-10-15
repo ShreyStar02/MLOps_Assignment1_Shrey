@@ -77,6 +77,11 @@ def render_report_md(config: dict, metadata: dict, eda: dict) -> str:
         "https://archive.ics.uci.edu/dataset/45/heart+disease",
     )
     video_link = config.get("video_link", "")
+    video_path = REPORT_DIR / "demo_video.mp4"
+    if video_path.exists():
+        video_info = f"[Demo video]({video_path.name})"
+    else:
+        video_info = f"[{video_link}]({video_link})" if video_link else "Not supplied"
     missing = eda.get("missing_values", {})
     class_counts = eda.get("class_counts", {})
     rows = eda.get("rows", 0)
@@ -84,7 +89,6 @@ def render_report_md(config: dict, metadata: dict, eda: dict) -> str:
     model_name = metadata.get("model", "logistic_regression")
     sk = metadata.get("scikit_learn_version", "Unknown")
     candidate_table = model_table(metadata)
-    video_info = f"[{video_link}]({video_link})" if video_link else "Not supplied"
     feature_names = ", ".join(metadata.get("features", []))
     template = f'''---
 title: MLOps Assignment 1 Report
@@ -290,7 +294,11 @@ def generate_docx(config: dict, metadata: dict, eda: dict) -> None:
     doc.add_paragraph(f"{course_name} ({course_code}) | Total marks: {total_marks}")
     doc.add_paragraph(f"Student: {student_name} | BITS ID: {bits_id}")
     doc.add_paragraph(f"Repository: {repo}")
-    doc.add_paragraph(f"Video recording: {video_link or 'Not supplied'}")
+    video_path = REPORT_DIR / "demo_video.mp4"
+    if video_path.exists():
+        doc.add_paragraph(f"Video recording: {video_path.name}")
+    else:
+        doc.add_paragraph(f"Video recording: {video_link or 'Not supplied'}")
     doc.add_heading("Objective", level=1)
     doc.add_paragraph(config.get("objective", ""))
     doc.add_page_break()
@@ -379,7 +387,7 @@ def generate_docx(config: dict, metadata: dict, eda: dict) -> None:
             "For local use, start the stack with docker compose up --build. The API, "
             "Prometheus, and Grafana are exposed on ports 8000, 9090, and 3000. "
             "Kubernetes access is available with kubectl port-forward svc/heart-api "
-            "8001:80. A video recording was not supplied in the report configuration.",
+            "8001:80. Video recording is available in report/demo_video.mp4.",
         ),
     ]
 
@@ -504,6 +512,9 @@ def verify_report(report_md: str) -> None:
         raise FileNotFoundError(DOCX_PATH)
     if not PDF_PATH.exists():
         raise FileNotFoundError(PDF_PATH)
+    video_path = REPORT_DIR / "demo_video.mp4"
+    if not video_path.exists():
+        raise FileNotFoundError("Missing demo video: report/demo_video.mp4")
     reader = PdfReader(str(PDF_PATH))
     page_count = len(reader.pages)
     if page_count < 10:

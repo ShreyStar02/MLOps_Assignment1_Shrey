@@ -13,7 +13,7 @@ ms.topic: report
 * Student: SHREYES RAM V.
 * BITS ID: 2025AE05177
 * Repository: [https://github.com/ShreyStar02/MLOps_Assignment1_Shrey](https://github.com/ShreyStar02/MLOps_Assignment1_Shrey)
-**Video recording:** Not supplied
+**Video recording:** [Demo video](demo_video.mp4)
 
 ## Objective and problem
 
